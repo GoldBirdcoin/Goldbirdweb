@@ -69,4 +69,25 @@
       console.log("User Logged In:", user);
     }
   }
+</script><button onclick="mineGoldBird()">Start Mining</button>
+
+<script>
+async function mineGoldBird() {
+    let user = supabase.auth.user();
+    if (!user) {
+        alert("Please log in first!");
+        return;
+    }
+
+    let { data, error } = await supabase
+        .from('users')
+        .update({ goldbird_coins: supabase.raw('goldbird_coins + 1') })
+        .eq('id', user.id);
+
+    if (error) {
+        console.error("Mining Error:", error.message);
+    } else {
+        alert("You mined 1 GoldBird coin!");
+    }
+}
 </script>
