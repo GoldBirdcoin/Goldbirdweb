@@ -1,93 +1,57 @@
-<!DOCTYPE html><html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GoldBird - Earn with Mining</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background: linear-gradient(135deg, #FFD700, #FF8C00);
-            color: white;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            padding: 50px;
-        }
-        h1 {
-            font-size: 3em;
-            margin-bottom: 10px;
-        }
-        p {
-            font-size: 1.5em;
-        }
-        .btn {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 15px 30px;
-            font-size: 1.2em;
-            color: white;
-            background: #ff4500;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-        }
-        .btn:hover {
-            background: #e03e00;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Welcome to GoldBird</h1>
-        <p>Mine GoldBird coins and earn rewards!</p>
-        <a href="#" class="btn">Start Mining</a>
-    </div>
-</body>
-</html><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const supabaseUrl = "https://YOUR_PROJECT_URL.supabase.co"; 
   const supabaseKey = "YOUR_ANON_KEY"; 
   const supabase = supabase.createClient(supabaseUrl, supabaseKey);
   
+  // ✅ Sign Up Function (Database Entry ke sath)
   async function signUpUser(email, password) {
-    let { user, error } = await supabase.auth.signUp({ email, password });
+    let { data, error } = await supabase.auth.signUp({ email, password });
+
     if (error) {
       console.error("Sign Up Error:", error.message);
     } else {
-      console.log("User Created:", user);
+      console.log("User Created:", data.user);
+
+      // ✅ Database me user add karna
+      await supabase.from("users").insert([
+        { id: data.user.id, email: email, goldbird_coins: 0 }
+      ]);
     }
   }
 
+  // ✅ Sign In Function (Thik hai)
   async function signInUser(email, password) {
-    let { user, error } = await supabase.auth.signInWithPassword({ email, password });
+    let { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       console.error("Login Error:", error.message);
     } else {
-      console.log("User Logged In:", user);
+      console.log("User Logged In:", data.user);
     }
   }
-</script><button onclick="mineGoldBird()">Start Mining</button>
 
-<script>
-async function mineGoldBird() {
-    let user = supabase.auth.user();
-    if (!user) {
-        alert("Please log in first!");
-        return;
-    }
+  // ✅ Mining Function (Fix kiya)
+  async function mineGoldBird() {
+      let { data: userData, error: userError } = await supabase.auth.getUser();
+      let user = userData.user;
 
-    let { data, error } = await supabase
-        .from('users')
-        .update({ goldbird_coins: supabase.raw('goldbird_coins + 1') })
-        .eq('id', user.id);
+      if (!user) {
+          alert("Please log in first!");
+          return;
+      }
 
-    if (error) {
-        console.error("Mining Error:", error.message);
-    } else {
-        alert("You mined 1 GoldBird coin!");
-    }
-}
+      let { error } = await supabase
+          .from('users')
+          .update({ goldbird_coins: supabase.increment(1) }) // ✅ FIXED: supabase.raw hata diya
+          .eq('id', user.id);
+
+      if (error) {
+          console.error("Mining Error:", error.message);
+      } else {
+          alert("You mined 1 GoldBird coin!");
+      }
+  }
 </script>
+
+<button onclick="mineGoldBird()">Start Mining</button>
